@@ -1,0 +1,22 @@
+/*
+Theme Name: Gonçalo Gonçalves — Portfolio 2026 (Child)
+Theme URI: https://www.goncalogoncalves.pt
+Template: goncalo-portfolio-theme
+Author: Gonçalo Gonçalves
+Description: Child theme for the Portfolio 2026 block theme. Activate this one and put your own tweaks here — custom CSS below, plus any template/part/pattern overrides — so they survive updates to the parent theme.
+Version: 1.0.0
+Requires at least: 6.6
+Requires PHP: 7.4
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: goncalo-portfolio-child
+*/
+
+/* ---------------------------------------------------------------------------
+   Your custom CSS goes here. It loads after the parent's stylesheet, so
+   anything you write wins.
+
+   Examples:
+   .pf-controls { gap: 12px; }
+   .card__content p { font-size: 14px; }
+   --------------------------------------------------------------------------- */

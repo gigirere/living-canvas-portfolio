@@ -1,0 +1,55 @@
+/* Block editor styling — approximates the front-end so authoring matches the
+   published result. Cards are shown as normal stacked blocks in the editor. */
+
+.gp-card-edit {
+	border-radius: 4px;
+	overflow: hidden;
+	box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+	margin: 8px 0;
+}
+.gp-card-edit__topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 6px 8px 4px;
+}
+.gp-card-edit__label {
+	font-size: 10px;
+	font-weight: 300;
+	color: #606060;
+}
+.gp-card-edit__content {
+	padding: 8px;
+}
+.gp-card-edit__content :where(h1, h2, h3, h4) {
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 1.1;
+}
+.gp-card-edit__content :where(p, li) {
+	font-size: 13px;
+	font-weight: 300;
+	line-height: 1.3;
+}
+
+/* The page H1 and the "thinking" notes, as they appear while editing. */
+.editor-styles-wrapper .pf-h1 {
+	font-size: 10px;
+	font-weight: 300;
+	line-height: 1;
+	color: #606060;
+}
+.editor-styles-wrapper .pf-notes {
+	width: 300px;
+	max-width: 100%;
+	padding: 4px 8px 8px;
+	outline: 1px dashed rgba(16, 16, 16, 0.2);
+}
+.editor-styles-wrapper .pf-notes__label {
+	font-size: 10px;
+	font-weight: 300;
+	color: #606060;
+}
+.editor-styles-wrapper .pf-notes > p:nth-of-type(n + 3) {
+	color: #808080;
+}

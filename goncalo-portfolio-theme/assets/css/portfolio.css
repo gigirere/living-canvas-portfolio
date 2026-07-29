@@ -1,0 +1,491 @@
+/* ===========================================================================
+   Gonçalo Gonçalves — Portfolio 2026
+   Progressive enhancement:
+   - BASE (no JS): cards + notes stack in a readable column. Nothing explodes.
+   - ENHANCED: portfolio.js adds `.is-canvas` to the stage on EVERY screen size
+     (mobile mirrors desktop), turning the stack into a draggable canvas.
+   Core block styles are intentionally left intact inside cards; the flex `gap`
+   drives the vertical rhythm.
+   ========================================================================= */
+
+:root {
+	--gp-paper: #ded8cc;
+	--gp-ink: #101010;
+	--gp-muted: #606060;
+	--gp-dim: #808080;
+	--gp-card-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+	--gp-chip-bg: rgba(255, 255, 252, 0.8);
+	--gp-hairline: #bcb49e;
+	/* Card geometry on the mobile canvas. */
+	--gp-mobile-gutter: 11px;
+	--gp-mobile-step: 64px;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background: var(--gp-paper);
+	color: var(--gp-ink);
+	font-synthesis: none;
+	-webkit-font-smoothing: antialiased;
+}
+
+/* ---- Accessibility ------------------------------------------------------ */
+
+/* Skip link: visually hidden until focused. Self-contained (it deliberately
+   avoids core's .screen-reader-text rules so the two cannot fight). */
+a.pf-skip-link {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+a.pf-skip-link:focus,
+a.pf-skip-link:focus-visible {
+	position: fixed;
+	top: 8px;
+	left: 8px;
+	z-index: 300;
+	width: auto;
+	height: auto;
+	margin: 0;
+	padding: 8px 12px;
+	overflow: visible;
+	clip-path: none;
+	border-radius: 4px;
+	background: #fff;
+	color: var(--gp-ink);
+	font-size: 13px;
+	line-height: 1;
+	text-decoration: none;
+	box-shadow: var(--gp-card-shadow);
+}
+
+/* Visible focus indicator. Real selectors (not :where) so plugin styles cannot
+   silently win — never remove an outline without providing a substitute. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+	outline: 2px solid var(--gp-ink);
+	outline-offset: 2px;
+}
+
+/* Respect reduced-motion preferences. */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+	.pf-swatch:hover {
+		transform: none;
+	}
+}
+
+/* Privacy-policy link — quiet, bottom-left, matches the H1 scale. */
+.pf-privacy {
+	position: fixed;
+	bottom: 8px;
+	left: 8px;
+	z-index: 200;
+	font-size: 10px;
+	font-weight: 300;
+	line-height: 1;
+	color: var(--gp-muted);
+	text-decoration: none;
+}
+.pf-privacy:hover,
+.pf-privacy:focus-visible {
+	color: var(--gp-ink);
+	text-decoration: underline;
+}
+
+/* ---- Floating control chip (centred at top, every page) ----------------- */
+.pf-controls {
+	position: fixed;
+	top: 8px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 200;
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 8px 16px;
+	border-radius: 8px;
+	background: var(--gp-chip-bg);
+	box-shadow: var(--gp-card-shadow);
+	-webkit-backdrop-filter: blur(6px);
+	backdrop-filter: blur(6px);
+}
+
+.pf-logo {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 40px;
+	font-family: var(--wp--preset--font-family--serif, ui-serif, Georgia, serif);
+	font-size: 32px;
+	font-weight: 500;
+	line-height: 0.9;
+	color: var(--gp-ink);
+	text-decoration: none;
+	cursor: pointer;
+}
+.pf-logo:hover,
+.pf-logo:focus-visible {
+	color: var(--gp-muted);
+}
+
+.pf-swatches {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 8px;
+}
+.pf-swatch {
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
+	padding: 0;
+	border: 1px solid var(--gp-hairline);
+	border-radius: 8px;
+	cursor: pointer;
+	transition: transform 0.15s, opacity 0.15s;
+}
+.pf-swatch:hover {
+	transform: scale(1.1);
+}
+
+/* Show/hide cards toggle (replaces the old alignment controls). */
+.pf-toggle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 4px;
+	border: 1px solid var(--gp-hairline);
+	border-radius: 4px;
+	background: none;
+	color: var(--gp-ink);
+	cursor: pointer;
+	transition: background-color 0.15s;
+}
+.pf-toggle:hover {
+	background: rgba(16, 16, 16, 0.06);
+}
+.pf-toggle svg {
+	display: block;
+}
+/* Default state = cards visible → offer "hide" (eye-off icon). */
+.pf-toggle__show {
+	display: none;
+}
+.pf-controls.cards-hidden .pf-toggle__hide {
+	display: none;
+}
+.pf-controls.cards-hidden .pf-toggle__show {
+	display: block;
+}
+.pf-controls.cards-hidden .pf-swatch {
+	opacity: 0.35;
+}
+
+/* ---- Stage -------------------------------------------------------------- */
+.pf-stage {
+	position: relative;
+	width: 100%;
+	min-height: 100vh;
+	overflow-x: hidden;
+}
+
+/* ---- Page H1 + "thinking" notes (background content) -------------------
+   Authored as ordinary core blocks. In the stacked base state they read as
+   normal text; on the canvas they are pinned top-left behind the cards. */
+.pf-h1 {
+	margin: 0;
+	font-family: var(--wp--preset--font-family--sans-serif, system-ui, sans-serif);
+	font-size: 10px;
+	font-weight: 300;
+	line-height: 1;
+	color: var(--gp-muted);
+}
+
+.pf-notes {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 300px;
+	max-width: 100%;
+	padding: 4px 8px 8px;
+}
+.pf-notes__label {
+	margin: 0;
+	font-size: 10px;
+	font-weight: 300;
+	line-height: 1;
+	color: var(--gp-muted);
+}
+.pf-notes h2,
+.pf-notes h3 {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 1;
+}
+.pf-notes p {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 300;
+	line-height: 1.2;
+}
+/* 2nd and later paragraphs after the heading read as older, dimmed notes. */
+.pf-notes > p:nth-of-type(n + 3) {
+	color: var(--gp-dim);
+}
+
+/* ---- BASE: stacked, readable column (no JS) ---------------------------- */
+.pf-stage > .entry-content,
+.pf-stage > .wp-block-post-content {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	max-width: 480px;
+	margin: 0 auto;
+	padding: 80px 16px 64px;
+}
+
+.card {
+	position: relative;
+	overflow: hidden;
+	border-radius: 4px;
+	box-shadow: var(--gp-card-shadow);
+}
+
+/* Stacked state: ignore the authored pixel size. */
+.pf-stage:not(.is-canvas) .card {
+	width: 100% !important;
+	height: auto !important;
+}
+
+.card__drag {
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 3;
+	padding: 4px;
+	border: 0;
+	background: none;
+	cursor: grab;
+	touch-action: none;
+}
+.card__drag:active {
+	cursor: grabbing;
+}
+
+.card__scroll {
+	position: relative;
+}
+
+.card__content {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 4px 8px 8px;
+}
+
+.card__topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
+	padding-top: 4px;
+}
+.card__label {
+	font-size: 10px;
+	font-weight: 300;
+	line-height: 1;
+	color: var(--gp-muted);
+}
+.card__actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+.card__back {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: pointer;
+	transition: opacity 0.15s;
+}
+.card__back:hover {
+	opacity: 0.6;
+}
+
+/* ---- Card content: core block styles stay intact ----------------------- */
+.card__content > * {
+	margin-block: 0;
+}
+.card__content :where(h1, h2, h3, h4, h5, h6) {
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 1.1;
+	color: var(--gp-ink);
+}
+.card__content :where(p, li) {
+	font-size: 13px;
+	font-weight: 300;
+	line-height: 1.3;
+	color: var(--gp-ink);
+}
+.card__content :where(figure, .wp-block-image) {
+	margin: 0;
+}
+.card__content :where(.wp-block-image) img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+/* Plain links get the wavy underline; button blocks keep their own styling. */
+.card__content a:not(.wp-block-button__link):not(.wp-element-button) {
+	color: inherit;
+	text-decoration: underline wavy 1px;
+	text-underline-position: from-font;
+}
+
+/* ---- ENHANCED: the draggable canvas (all screen sizes) ----------------- */
+.pf-stage.is-canvas > .entry-content,
+.pf-stage.is-canvas > .wp-block-post-content {
+	display: block;
+	max-width: none;
+	margin: 0;
+	padding: 0;
+}
+
+.pf-stage.is-canvas .card {
+	position: absolute;
+	/* left/top/width/height are set by portfolio.js */
+}
+.pf-stage.is-canvas .card__drag {
+	display: flex;
+}
+.pf-stage.is-canvas .card__scroll {
+	position: absolute;
+	inset: 0;
+	overflow-x: hidden;
+	overflow-y: auto;
+	scrollbar-width: none;
+}
+.pf-stage.is-canvas .card__scroll::-webkit-scrollbar {
+	display: none;
+}
+.pf-stage.is-canvas .card__content {
+	min-height: 100%;
+}
+.pf-stage.is-canvas .card__topbar {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+}
+
+/* H1 pinned top-left, notes below it — behind the cards. */
+.pf-stage.is-canvas .pf-h1 {
+	position: absolute;
+	top: 4px;
+	left: 8px;
+	z-index: 1;
+}
+.pf-stage.is-canvas .pf-notes {
+	position: absolute;
+	top: 38px;
+	left: 0;
+	z-index: 1;
+}
+
+/* Cards hidden → the notes become the whole page. */
+.pf-stage.cards-hidden .card {
+	display: none;
+}
+
+/* ---- Front-end resize handle (canvas only) ----------------------------- */
+.card__resize {
+	display: none;
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	width: 18px;
+	height: 18px;
+	z-index: 3;
+	cursor: nwse-resize;
+	touch-action: none;
+	background: linear-gradient(
+		135deg,
+		transparent 0 50%,
+		rgba(16, 16, 16, 0.35) 50% 60%,
+		transparent 60% 72%,
+		rgba(16, 16, 16, 0.35) 72% 82%,
+		transparent 82%
+	);
+}
+.pf-stage.is-canvas .card__resize {
+	display: block;
+}
+
+/* ---- Normal pages / posts ---------------------------------------------- */
+.pf-page {
+	min-height: 100vh;
+	padding: 96px 24px 64px;
+}
+.pf-page__title {
+	margin: 0 0 24px;
+}
+
+/* ---- Mobile canvas: same behaviour, tighter geometry ------------------- */
+@media (max-width: 1023px) {
+	.pf-controls {
+		gap: 8px;
+		padding: 6px 10px;
+	}
+	.pf-swatches {
+		gap: 10px;
+		padding: 4px;
+	}
+	.pf-logo {
+		font-size: 26px;
+		height: 32px;
+	}
+	/* Notes sit under the chip so cards can be dragged clear of them. */
+	.pf-stage.is-canvas .pf-notes {
+		width: calc(100% - 16px);
+	}
+	.card__content img {
+		max-height: 60vw;
+		object-fit: cover;
+	}
+}

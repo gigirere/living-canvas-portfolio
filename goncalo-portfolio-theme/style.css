@@ -1,0 +1,16 @@
+/*
+Theme Name: Gonçalo Gonçalves — Portfolio 2026
+Theme URI: https://www.goncalogoncalves.pt
+Author: Gonçalo Gonçalves
+Description: Draggable-card portfolio. A block theme: content is authored with Gutenberg blocks (the "Card" block plus core blocks for the page H1 and the "thinking" notes), so the markup stays semantic for SEO. A small vanilla-JS layer turns the cards into a draggable canvas on desktop and mobile alike, with show/hide, bring-to-front, resize and reset controls. Typography, colours and fonts (including Google Fonts via the Font Library) are editable in Appearance → Editor → Styles.
+Version: 2.0.0
+Requires at least: 6.6
+Tested up to: 7.0
+Requires PHP: 7.4
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: goncalo-portfolio
+Tags: one-column, block-patterns, full-site-editing, editor-style, portfolio, custom-colors, blog
+*/
+
+/* Styles live in assets/css/portfolio.css (enqueued in functions.php) and in theme.json. */

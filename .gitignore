@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Build artefacts / packaged themes
+*.zip
+
+# Editor / tooling
+.vscode/
+.idea/
+*.swp
+
+# Dependencies (none required — the themes have no build step)
+node_modules/
+vendor/
+
+# Local WordPress installs must never be committed
+wordpress/
+wp-config.php
+wp-content/uploads/

@@ -1,0 +1,40 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "goncalo/card",
+	"title": "Card",
+	"category": "goncalo",
+	"icon": "index-card",
+	"description": "A draggable portfolio card. Add headings, paragraphs and images inside; reorder them freely. Choose a background colour and whether the card can be closed.",
+	"keywords": [ "card", "portfolio", "panel" ],
+	"textdomain": "goncalo-portfolio",
+	"supports": {
+		"html": false,
+		"reusable": true,
+		"anchor": true
+	},
+	"attributes": {
+		"label": {
+			"type": "string",
+			"default": ""
+		},
+		"bgColor": {
+			"type": "string",
+			"default": "#75D2FE"
+		},
+		"headerColor": {
+			"type": "string",
+			"default": ""
+		},
+		"width": {
+			"type": "number",
+			"default": 360
+		},
+		"height": {
+			"type": "number",
+			"default": 480
+		}
+	},
+	"editorScript": "gp-card-editor",
+	"render": "file:./render.php"
+}
