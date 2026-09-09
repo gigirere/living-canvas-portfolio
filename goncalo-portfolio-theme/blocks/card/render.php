@@ -5,6 +5,11 @@
  * Available vars: $attributes, $content (inner blocks HTML), $block.
  * Wraps the semantic inner HTML with the draggable-card chrome.
  *
+ * `.card__content` carries `is-layout-flow` so WordPress's own layout rules
+ * apply to the blocks inside: `.is-layout-flow > .alignleft/.alignright` float,
+ * `.aligncenter` centres, and blockGap supplies the vertical rhythm. Without
+ * that class the native alignment controls render but do nothing.
+ *
  * @package goncalo-portfolio
  */
 
@@ -18,11 +23,11 @@ $tints_body   = $header_color !== $bg_color;
 $anchor   = ! empty( $attributes['anchor'] ) ? $attributes['anchor'] : '';
 $style    = sprintf(
 	'background-color:%s;width:%dpx;height:%dpx;',
-	esc_attr( $bg_color ),
+	$bg_color,
 	$width,
 	$height
 );
-$body_bg  = $tints_body ? sprintf( 'background-color:%s;', esc_attr( $header_color ) ) : '';
+$body_bg  = $tints_body ? sprintf( 'background-color:%s;', $header_color ) : '';
 
 $drag_svg = '<svg width="16" height="16" viewBox="0 0 128 128" aria-hidden="true" style="transform:rotate(270deg)"><path d="M52 30A6 6 0 1 1 46 24 6 6 0 0 1 52 30Zm30 6a6 6 0 1 0-6-6A6 6 0 0 0 82 36ZM46 58a6 6 0 1 0 6 6A6 6 0 0 0 46 58Zm36 0a6 6 0 1 0 6 6A6 6 0 0 0 82 58ZM46 92a6 6 0 1 0 6 6A6 6 0 0 0 46 92Zm36 0a6 6 0 1 0 6 6A6 6 0 0 0 82 92Z" fill="#606060"/></svg>';
 
@@ -48,8 +53,8 @@ $wrapper = get_block_wrapper_attributes(
 	</button>
 
 	<div class="card__scroll">
-		<div class="card__content" style="<?php echo esc_attr( $body_bg ); ?>">
-			<div class="card__topbar" style="<?php echo esc_attr( 'background-color:' . $header_color . ';' ); ?>">
+		<div class="card__content is-layout-flow" style="<?php echo esc_attr( $body_bg ); ?>">
+			<div class="card__topbar" style="<?php echo esc_attr( sprintf( 'background-color:%s;', $header_color ) ); ?>">
 				<span class="card__label"><?php echo esc_html( $label ); ?></span>
 				<span class="card__actions">
 					<button type="button" class="card__back" data-pf-back aria-label="<?php echo esc_attr( sprintf( /* translators: card label */ __( 'Send %s card to back', 'goncalo-portfolio' ), $label ) ); ?>">
