@@ -5,8 +5,8 @@
 	"title": "Card",
 	"category": "goncalo",
 	"icon": "index-card",
-	"description": "A draggable portfolio card. Add headings, paragraphs and images inside; reorder them freely. Choose a background colour and whether the card can be closed.",
-	"keywords": [ "card", "portfolio", "panel" ],
+	"description": "A draggable portfolio card. Add headings, paragraphs, images, galleries, and videos inside; reorder them freely. Choose a background colour and optional header colour.",
+	"keywords": [ "card", "portfolio", "panel", "gallery", "video" ],
 	"textdomain": "goncalo-portfolio",
 	"supports": {
 		"html": false,

@@ -67,7 +67,7 @@ function gp_register_blocks() {
 	wp_register_script(
 		'gp-card-editor',
 		GP_URI . '/blocks/card/index.js',
-		array( 'wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n' ),
+		array( 'wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-hooks', 'wp-data' ),
 		GP_VERSION,
 		true
 	);

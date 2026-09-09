@@ -1,7 +1,7 @@
 /**
  * "Card" block editor — no build step, uses the wp.* globals registered as
  * script dependencies. Content is authored with core blocks (heading,
- * paragraph, image) via InnerBlocks, so it saves as semantic HTML for SEO.
+ * paragraph, image, gallery, video) via InnerBlocks, so it saves as semantic HTML for SEO.
  */
 ( function ( wp ) {
 	const { registerBlockType } = wp.blocks;
@@ -25,10 +25,71 @@
 		'core/heading',
 		'core/paragraph',
 		'core/image',
+		'core/gallery',
+		'core/embed',
+		'core/video',
 		'core/list',
 		'core/separator',
 		'core/buttons',
 	];
+
+	/**
+	 * Walk up the block tree to see if a clientId lives inside goncalo/card.
+	 *
+	 * @param {string|null} clientId Block client id.
+	 * @return {boolean}
+	 */
+	function isInsideCardBlock( clientId ) {
+		if ( ! clientId || ! wp.data ) {
+			return false;
+		}
+
+		var select = wp.data.select( 'core/block-editor' );
+		var currentId = clientId;
+
+		while ( currentId ) {
+			var block = select.getBlock( currentId );
+			if ( ! block ) {
+				break;
+			}
+			if ( block.name === 'goncalo/card' ) {
+				return true;
+			}
+			currentId = select.getBlockRootClientId( currentId );
+		}
+
+		return false;
+	}
+
+	/**
+	 * Embed blocks are variations of core/embed — core-embed/vimeo is not valid
+	 * in allowedBlocks on modern WordPress. Limit the inserter to Vimeo when
+	 * inserting inside a Card block.
+	 */
+	if ( wp.hooks ) {
+		wp.hooks.addFilter(
+			'blocks.getBlockVariations',
+			'goncalo/card/limit-embed-variations',
+			function ( variations, blockName ) {
+				if ( blockName !== 'core/embed' || ! wp.data ) {
+					return variations;
+				}
+
+				var select = wp.data.select( 'core/block-editor' );
+				var insertionPoint = select.getBlockInsertionPoint();
+				var rootClientId = insertionPoint ? insertionPoint.rootClientId : null;
+				var selectedClientId = select.getSelectedBlockClientId();
+
+				if ( ! isInsideCardBlock( rootClientId ) && ! isInsideCardBlock( selectedClientId ) ) {
+					return variations;
+				}
+
+				return variations.filter( function ( variation ) {
+					return variation.name === 'vimeo';
+				} );
+			}
+		);
+	}
 
 	const TEMPLATE = [
 		[ 'core/heading', { level: 2, placeholder: __( 'Card title', 'goncalo-portfolio' ) } ],
@@ -136,7 +197,7 @@
 		save: function () {
 			// Dynamic block: render.php wraps this saved inner HTML with the
 			// card chrome. Returning InnerBlocks.Content keeps the headings,
-			// paragraphs and images as real HTML in post_content (SEO-friendly).
+			// paragraphs, images, galleries and videos as real HTML in post_content (SEO-friendly).
 			return el( InnerBlocks.Content );
 		},
 	} );

@@ -372,6 +372,21 @@ summary:focus-visible,
 	width: 100%;
 	height: auto;
 }
+.card__content :where(.wp-block-gallery, .wp-block-video, .wp-block-embed) {
+	margin: 0;
+	max-width: 100%;
+}
+.card__content :where(.wp-block-gallery) {
+	gap: 8px;
+}
+.card__content :where(.wp-block-gallery) img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+.card__content :where(.wp-block-embed__wrapper, .wp-block-video video) {
+	max-width: 100%;
+}
 /* Plain links get the wavy underline; button blocks keep their own styling. */
 .card__content a:not(.wp-block-button__link):not(.wp-element-button) {
 	color: inherit;
@@ -484,7 +499,7 @@ summary:focus-visible,
 	.pf-stage.is-canvas .pf-notes {
 		width: calc(100% - 16px);
 	}
-	.card__content img {
+	.card__content :where(.wp-block-image, .wp-block-gallery) img {
 		max-height: 60vw;
 		object-fit: cover;
 	}
