@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
-define( 'GP_VERSION', '2.0.0' );
+define( 'GP_VERSION', '2.1.0' );
 define( 'GP_DIR', get_template_directory() );
 define( 'GP_URI', get_template_directory_uri() );
 
@@ -62,12 +62,15 @@ add_action( 'wp_enqueue_scripts', 'gp_enqueue_assets' );
 /**
  * Register the "Card" block. The block name and attributes are unchanged from
  * v1 so previously saved cards keep rendering.
+ *
+ * wp-data is a real dependency: the editor derives the card's allowed inner
+ * blocks from the live block registry (see blocks/card/index.js).
  */
 function gp_register_blocks() {
 	wp_register_script(
 		'gp-card-editor',
 		GP_URI . '/blocks/card/index.js',
-		array( 'wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-hooks', 'wp-data' ),
+		array( 'wp-blocks', 'wp-block-editor', 'wp-element', 'wp-components', 'wp-i18n', 'wp-data' ),
 		GP_VERSION,
 		true
 	);

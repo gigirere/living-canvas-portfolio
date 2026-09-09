@@ -38,12 +38,30 @@ Everything on the canvas is ordinary block content in the page:
 |---|---|---|
 | `goncalo goncalves, 2026` | **Heading (H1)**, class `pf-h1` | The page H1. Fully editable. |
 | `thinking` / `public notes to self` + notes | **Group**, class `pf-notes`, containing a Paragraph (class `pf-notes__label`), an H2 and Paragraphs | Sits in the background, behind the cards. No longer a card — just core blocks. The 3rd paragraph onward renders dimmed. |
-| The cards | **Card** block (`goncalo/card`) | One per card; add/reorder Heading, Paragraph, Image, List inside. |
+| The cards | **Card** block (`goncalo/card`) | One per card. Any core block works inside it and can be reordered freely. |
 
 ## Editing content
 
-Inside a **Card** you add and reorder core blocks (Heading, Paragraph, Image,
-List) with the normal Gutenberg controls. Images upload to the **Media Library**.
+A Card is a **container only** — everything inside it is an ordinary Gutenberg
+block, with its own toolbar and sidebar. Heading, Paragraph, Image, Gallery,
+Video, Embed, Columns, Group, Quote, Table, Details, Buttons, List, Separator,
+third-party blocks: all of them insert, paste, transform and reorder natively.
+Images upload to the **Media Library**.
+
+The one exception is the Card block itself, which cannot be nested inside
+another Card — the canvas script positions every card it finds, so a card
+inside a card would break the layout.
+
+Two things to know about how a Card lays out its contents:
+
+- **The card is a fixed size, and taller content scrolls inside it.** The
+  editor shows the same fixed height and the same internal scrolling, so what
+  you see while authoring is what the visitor gets. Adjust **Height** in the
+  sidebar to fit more.
+- **The native alignment and spacing controls work.** The card body is a core
+  flow-layout container, so "Align left" / "Align right" float and text wraps
+  around the image, "Align center" centres, and the Dimensions panel's margins
+  apply. An image you have not sized or aligned fills the card width.
 
 Each Card's sidebar has: **Label** (the small eyebrow), **Width / Height** (its
 size on the desktop canvas) and **Background** + optional **Header colour**.
@@ -124,6 +142,36 @@ part, so the controls can never be deleted by accident in the Site Editor.
 - **JPEG → WebP/AVIF** — re-upload `dscarb-1.jpg` and `amigos-1-1.jpg` as WebP/AVIF.
 - **Core Web Vitals** — measure on PageSpeed Insights once deployed.
 - `/.well-known/security.txt` — a static file on the host.
+
+## Upgrade notes (v2.0 → v2.1)
+
+Nothing to migrate — the block name, attributes and saved markup are unchanged,
+so existing cards keep rendering. What changed:
+
+- **Any block can now go inside a Card.** v2.0 whitelisted nine core blocks via
+  `allowedBlocks`; because that list also gates paste and block transforms, you
+  could not paste a Quote into a card or turn a Paragraph into one. The list is
+  now derived from the live block registry minus `goncalo/card`, so blocks added
+  by a later WordPress release or a plugin are available without editing the
+  theme.
+- **Native alignment works.** `.card__content` was a flex column, and flex items
+  ignore floats and auto margins — the Image block's align controls rendered but
+  did nothing. The card body is now a core flow-layout container
+  (`is-layout-flow`), which is what WordPress's own
+  `.is-layout-flow > .alignleft` / `.aligncenter` rules key off.
+- **The editor matches the front end.** The editor card used `min-height` and
+  grew with its content while the front end used a fixed height with internal
+  scrolling, so a tall gallery looked fine while authoring and was cut off when
+  published. Both are now fixed height with the same scroll behaviour.
+- **Images obey the native size and align controls.** The blanket
+  `img { width: 100% }` is now the default only for an image with no explicit
+  width and no alignment.
+- **Removed a filter that never ran.** v2.0 tried to limit embeds inside cards to
+  Vimeo with a `blocks.getBlockVariations` filter. WordPress has no such hook
+  (see `blocks.*` in `wp-includes/js/dist/`), so the code was dead and every
+  embed provider was offered anyway. It is gone, along with the now-unused
+  `wp-hooks` script dependency; all embed providers are available, which is the
+  native behaviour.
 
 ## Upgrade notes (v1 → v2)
 

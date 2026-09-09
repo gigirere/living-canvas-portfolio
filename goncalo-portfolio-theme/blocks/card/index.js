@@ -1,14 +1,20 @@
 /**
  * "Card" block editor — no build step, uses the wp.* globals registered as
- * script dependencies. Content is authored with core blocks (heading,
- * paragraph, image, gallery, video) via InnerBlocks, so it saves as semantic HTML for SEO.
+ * script dependencies.
+ *
+ * The card is a container only: everything inside it is authored with native
+ * core blocks via InnerBlocks, so it saves as semantic HTML for SEO and every
+ * core block keeps its own toolbar, sidebar and behaviour. Nothing is
+ * whitelisted — the single exception is the Card block itself, which cannot be
+ * nested (the front-end canvas script positions every `[data-pf-card]` it
+ * finds, so a card inside a card would break the layout).
  */
 ( function ( wp ) {
 	const { registerBlockType } = wp.blocks;
-	const { InnerBlocks, InspectorControls, useBlockProps } = wp.blockEditor;
-	const { PanelBody, TextControl, ToggleControl, RangeControl, ColorPalette, BaseControl } =
-		wp.components;
+	const { InnerBlocks, InspectorControls, useBlockProps, useInnerBlocksProps } = wp.blockEditor;
+	const { PanelBody, TextControl, RangeControl, ColorPalette, BaseControl } = wp.components;
 	const { createElement: el, Fragment } = wp.element;
+	const { useSelect } = wp.data;
 	const { __ } = wp.i18n;
 
 	const PALETTE = [
@@ -21,95 +27,72 @@
 		{ name: 'Paper', color: '#DED8CC' },
 	];
 
-	const ALLOWED = [
-		'core/heading',
-		'core/paragraph',
-		'core/image',
-		'core/gallery',
-		'core/embed',
-		'core/video',
-		'core/list',
-		'core/separator',
-		'core/buttons',
-	];
-
-	/**
-	 * Walk up the block tree to see if a clientId lives inside goncalo/card.
-	 *
-	 * @param {string|null} clientId Block client id.
-	 * @return {boolean}
-	 */
-	function isInsideCardBlock( clientId ) {
-		if ( ! clientId || ! wp.data ) {
-			return false;
-		}
-
-		var select = wp.data.select( 'core/block-editor' );
-		var currentId = clientId;
-
-		while ( currentId ) {
-			var block = select.getBlock( currentId );
-			if ( ! block ) {
-				break;
-			}
-			if ( block.name === 'goncalo/card' ) {
-				return true;
-			}
-			currentId = select.getBlockRootClientId( currentId );
-		}
-
-		return false;
-	}
-
-	/**
-	 * Embed blocks are variations of core/embed — core-embed/vimeo is not valid
-	 * in allowedBlocks on modern WordPress. Limit the inserter to Vimeo when
-	 * inserting inside a Card block.
-	 */
-	if ( wp.hooks ) {
-		wp.hooks.addFilter(
-			'blocks.getBlockVariations',
-			'goncalo/card/limit-embed-variations',
-			function ( variations, blockName ) {
-				if ( blockName !== 'core/embed' || ! wp.data ) {
-					return variations;
-				}
-
-				var select = wp.data.select( 'core/block-editor' );
-				var insertionPoint = select.getBlockInsertionPoint();
-				var rootClientId = insertionPoint ? insertionPoint.rootClientId : null;
-				var selectedClientId = select.getSelectedBlockClientId();
-
-				if ( ! isInsideCardBlock( rootClientId ) && ! isInsideCardBlock( selectedClientId ) ) {
-					return variations;
-				}
-
-				return variations.filter( function ( variation ) {
-					return variation.name === 'vimeo';
-				} );
-			}
-		);
-	}
+	// Blocks that must never appear inside a card. Everything else — core and
+	// third-party alike — is allowed, so paste, block transforms and the
+	// Patterns tab all behave natively.
+	const DENIED = [ 'goncalo/card' ];
 
 	const TEMPLATE = [
 		[ 'core/heading', { level: 2, placeholder: __( 'Card title', 'goncalo-portfolio' ) } ],
 		[ 'core/paragraph', { placeholder: __( 'Write text…', 'goncalo-portfolio' ) } ],
 	];
 
+	/**
+	 * Every registered block except the denied ones.
+	 *
+	 * Derived from the live registry rather than hard-coded, so blocks added by
+	 * a future WordPress release or a plugin are available inside cards without
+	 * touching this file. Blocks with their own `parent`/`ancestor` rules (for
+	 * example core/list-item) stay correctly gated — WordPress checks those in
+	 * addition to this list.
+	 *
+	 * @return {string[]} Allowed block names.
+	 */
+	function useAllowedBlocks() {
+		return useSelect( function ( select ) {
+			const blockTypes = select( 'core/blocks' ).getBlockTypes();
+
+			return blockTypes
+				.map( function ( blockType ) {
+					return blockType.name;
+				} )
+				.filter( function ( name ) {
+					return DENIED.indexOf( name ) === -1;
+				} );
+		}, [] );
+	}
+
 	registerBlockType( 'goncalo/card', {
 		edit: function ( props ) {
 			const { attributes, setAttributes } = props;
 			const { label, bgColor, headerColor, width, height } = attributes;
 			const headerBg = headerColor || bgColor;
+			const allowedBlocks = useAllowedBlocks();
 
+			// The front end gives the card a fixed height and scrolls its
+			// content (see .card__scroll in portfolio.css). Mirror that here so
+			// authoring a tall gallery or video shows the same clipping the
+			// visitor will get.
 			const blockProps = useBlockProps( {
 				className: 'gp-card-edit',
 				style: {
 					backgroundColor: bgColor,
 					width: width + 'px',
-					minHeight: height + 'px',
+					height: height + 'px',
 				},
 			} );
+
+			// `is-layout-flow` is what makes WordPress's own layout rules apply
+			// to the blocks inside — alignleft/alignright floats, aligncenter,
+			// and the blockGap rhythm. Mirrors render.php.
+			const innerBlocksProps = useInnerBlocksProps(
+				{ className: 'gp-card-edit__content is-layout-flow' },
+				{
+					allowedBlocks: allowedBlocks,
+					template: TEMPLATE,
+					templateLock: false,
+				}
+			);
 
 			return el(
 				Fragment,
@@ -142,6 +125,10 @@
 							value: height,
 							min: 200,
 							max: 1000,
+							help: __(
+								'Content taller than this scrolls inside the card.',
+								'goncalo-portfolio'
+							),
 							onChange: function ( v ) {
 								setAttributes( { height: v } );
 							},
@@ -185,19 +172,15 @@
 						{ className: 'gp-card-edit__topbar', style: { backgroundColor: headerBg } },
 						el( 'span', { className: 'gp-card-edit__label' }, label || __( 'label', 'goncalo-portfolio' ) )
 					),
-					el(
-						'div',
-						{ className: 'gp-card-edit__content' },
-						el( InnerBlocks, { allowedBlocks: ALLOWED, template: TEMPLATE } )
-					)
+					el( 'div', { className: 'gp-card-edit__scroll' }, el( 'div', innerBlocksProps ) )
 				)
 			);
 		},
 
 		save: function () {
 			// Dynamic block: render.php wraps this saved inner HTML with the
-			// card chrome. Returning InnerBlocks.Content keeps the headings,
-			// paragraphs, images, galleries and videos as real HTML in post_content (SEO-friendly).
+			// card chrome. Returning InnerBlocks.Content keeps whatever core
+			// blocks were used as real HTML in post_content (SEO-friendly).
 			return el( InnerBlocks.Content );
 		},
 	} );

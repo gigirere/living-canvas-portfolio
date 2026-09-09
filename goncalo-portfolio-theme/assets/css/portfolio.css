@@ -309,11 +309,16 @@ summary:focus-visible,
 	position: relative;
 }
 
+/* Normal flow, not a flex column: core's alignment classes (alignleft,
+   alignright, aligncenter) use floats and auto margins, which flex items
+   ignore. The 16px rhythm is applied as sibling margins instead of `gap`. */
 .card__content {
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
 	padding: 4px 8px 8px;
+}
+.card__content::after {
+	content: "";
+	display: table;
+	clear: both;
 }
 
 .card__topbar {
@@ -352,6 +357,14 @@ summary:focus-visible,
 .card__content > * {
 	margin-block: 0;
 }
+/* Vertical rhythm between the card's OWN children. The doubled class keeps
+   this winning over the descendant `margin: 0` resets below whatever the
+   source order: `*` adds no specificity, so a plain `> * + *` would tie with
+   them at (0,1,0) and lose. Inline margins from the Dimensions panel still
+   win, so the native spacing controls keep working. */
+.card__content.card__content > * + * {
+	margin-block-start: 16px;
+}
 .card__content :where(h1, h2, h3, h4, h5, h6) {
 	font-size: 15px;
 	font-weight: 500;
@@ -369,8 +382,13 @@ summary:focus-visible,
 }
 .card__content :where(.wp-block-image) img {
 	display: block;
-	width: 100%;
+	max-width: 100%;
 	height: auto;
+}
+/* Cards are narrow, so an untouched image fills the width. Setting a width or
+   an alignment with the native Image controls wins over this. */
+.card__content :where(.wp-block-image:not([class*="align"])) img:not([style*="width"]) {
+	width: 100%;
 }
 .card__content :where(.wp-block-gallery, .wp-block-video, .wp-block-embed) {
 	margin: 0;
